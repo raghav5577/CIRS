@@ -1,6 +1,9 @@
+import { useNavigate } from "react-router-dom";
 import './header.css';
 
 function Header(){
+    const navigate = useNavigate();
+
     return(
         <header className="header">
             <div className="header-left">
@@ -22,7 +25,8 @@ function Header(){
                 <div className='user-icon'>
                     <i class="fa-solid fa-user"></i>
                 </div>
-                <button className='login-btn'>Login</button>
+                <button className='login-btn' onClick={() => navigate('/login')}>Login</button>
+                <button className='login-btn' onClick={() => navigate('/signup')}>Sign Up</button>
             </div>
 
         </header>
