@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard'
 import About from './pages/About'
 import Login from './pages/Login'
 import './App.css'
+import ProtectedRoutes from './components/ProtectedRoutes'
 
 function HomePage() {
   return (
@@ -25,7 +26,7 @@ function App() {
       <Header />
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<ProtectedRoutes><Dashboard /></ProtectedRoutes>} />
         <Route path="/about" element={<About />} />
         <Route path="/login" element={<Login />} />
       </Routes>
