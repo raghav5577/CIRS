@@ -23,6 +23,10 @@ const issueSchema = new mongoose.Schema({
         type: String, 
         required: true 
     },
+    location: { 
+        type: String, 
+        required: [true, 'Please add a location'] 
+    },
     status: { 
         type: String, 
         enum: ['Pending', 'In-Progress', 'Resolved'], 

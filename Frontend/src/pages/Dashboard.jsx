@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { Link } from 'react-router-dom';
 import API from '../api/api';
 import './Dashboard.css';
 import ReportIssueModal from '../components/ReportIssueModal';
+import IssueDetailModal from '../components/IssueDetailModal';
 
 function Dashboard() {
   const { user } = useAuth();
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedIssue, setSelectedIssue] = useState(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
    // 1. Define fetchIssues outside so it's accessible everywhere
   const fetchIssues = async () => {
@@ -39,12 +43,12 @@ function Dashboard() {
       <div className="dashboard-container">
         <aside className="sidebar">
           <div className="sidebar-top">
-            <a href="#" className="sidebar-link active">
+            <Link to="/dashboard" className="sidebar-link active">
               <i className="fa-solid fa-table-columns"></i> Dashboard
-            </a>
-            <a href="#" className="sidebar-link">
+            </Link>
+            <Link to="/my-reports" className="sidebar-link">
               <i className="fa-solid fa-file-lines"></i> My Reports
-            </a>
+            </Link>
             <a href="#" className="sidebar-link">
               <i className="fa-solid fa-map-location-dot"></i> Campus Map
             </a>
@@ -108,7 +112,7 @@ function Dashboard() {
           <div className="issues-section">
             <div className="issues-header">
               <h2>Recent Issue Submissions</h2>
-              <a href="#" className="view-all">View All</a>
+              <Link to="/my-reports" className="view-all">View All</Link>
             </div>
 
             {issues.length === 0 ? (
@@ -123,6 +127,7 @@ function Dashboard() {
                     <th>REPORT ID</th>
                     <th>ISSUE TITLE</th>
                     <th>CATEGORY</th>
+                    <th>LOCATION</th>
                     <th>DATE SUBMITTED</th>
                     <th>STATUS</th>
                     <th>ACTION</th>
@@ -134,6 +139,7 @@ function Dashboard() {
                       <td>#{issue._id.slice(-6).toUpperCase()}</td>
                       <td>{issue.title}</td>
                       <td>{issue.category}</td>
+                      <td>{issue.location}</td>
                       <td>{new Date(issue.createdAt).toLocaleDateString()}</td>
                       <td>
                         <span className={`badge badge-${issue.status.toLowerCase().replace(' ', '-')}`}>
@@ -141,7 +147,13 @@ function Dashboard() {
                         </span>
                       </td>
                       <td>
-                        <button className="action-btn">
+                        <button 
+                          className="action-btn" 
+                          onClick={() => {
+                            setSelectedIssue(issue);
+                            setIsDetailOpen(true);
+                          }}
+                        >
                           <i className="fa-solid fa-eye"></i>
                         </button>
                       </td>
@@ -197,7 +209,12 @@ function Dashboard() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onIssueCreated={fetchIssues}
-      /> {/*added later for issue connection*/}
+      />
+      <IssueDetailModal
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        issue={selectedIssue}
+      />
     </>
   );
 }

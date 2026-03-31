@@ -2,14 +2,14 @@ const Issue = require('../models/Issue');
 
 exports.createIssue = async (req,res)=>{
     try{
-        const {title, description, category} = req.body;
+        const {title, description, category, location} = req.body;
 
         const departmentMap = {
-             'Maintenance': 'Estate Office',
+             'Maintenance': 'Sterling and Wilson',
             'IT Support': 'IT Cell',
-            'Safety': 'Campus Security',
+            'Safety': 'CPS Security',
             'Facilities': 'Admin Block',
-            'Academic': 'Dean Office'
+            'Academic': 'Academic Office'
         };
         const department = departmentMap[category];
 
@@ -19,6 +19,7 @@ exports.createIssue = async (req,res)=>{
             description,
             category,
             department,
+            location,
             status: "Pending"
         });
         res.status(201).json(issue);

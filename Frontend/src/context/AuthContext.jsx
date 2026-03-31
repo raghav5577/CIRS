@@ -20,6 +20,7 @@ export const AuthProvider = ({children})=>{
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
         localStorage.setItem('token', data.token);
+        return data.user;
     };
     // 3. Register Function
     const register = async (userData) => {
@@ -27,6 +28,7 @@ export const AuthProvider = ({children})=>{
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
         localStorage.setItem('token', data.token);
+        return data.user;
     };
     // 4. Logout Function
     const logout = () => {

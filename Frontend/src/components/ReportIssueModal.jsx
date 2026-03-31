@@ -6,7 +6,8 @@ const ReportIssueModal = ({isOpen, onClose, onIssueCreated})=>{
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        category: '',
+        category: 'Maintenance',
+        location: '',
 });
 if(!isOpen) return null;
 const handleSubmit = async (e)=>{
@@ -52,6 +53,14 @@ return (
                         <option>Facilities</option>
                         <option>Academic</option>
                     </select>
+                    <label>Place of Issue</label>
+                    <input 
+                        type="text" 
+                        placeholder="e.g., Library, Block A" 
+                        value={formData.location} 
+                        onChange={(e) => setFormData({...formData, location: e.target.value})} 
+                        required 
+                    />
                     <label>Description</label>
                     <textarea 
                         rows="4" 

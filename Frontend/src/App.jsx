@@ -9,6 +9,7 @@ import About from './pages/About'
 import Login from './pages/Login'
 import './App.css'
 import ProtectedRoutes from './components/ProtectedRoutes'
+import MyReports from './pages/MyReports'
 
 function HomePage() {
   return (
@@ -27,6 +28,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/dashboard" element={<ProtectedRoutes><Dashboard /></ProtectedRoutes>} />
+        <Route path="/my-reports" element={<ProtectedRoutes><MyReports /></ProtectedRoutes>} />
         <Route path="/about" element={<About />} />
         <Route path="/login" element={<Login />} />
       </Routes>

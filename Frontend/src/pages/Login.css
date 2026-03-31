@@ -144,6 +144,18 @@
   background: transparent;
 }
 
+.role-select {
+  border: 0;
+  outline: none;
+  width: 100%;
+  font-size: 0.9rem;
+  color: #1a1a2e;
+  font-family: inherit;
+  background: transparent;
+  cursor: pointer;
+  appearance: none; /* Removes default arrow for custom look */
+}
+
 .label-row {
   display: flex;
   justify-content: space-between;

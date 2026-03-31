@@ -14,7 +14,8 @@ function Login() {
     email: '',
     universityID: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    role: 'student'
   });
 
   const handleChange = (e) => {
@@ -24,10 +25,15 @@ function Login() {
   async function handleLogin(e) {
     e.preventDefault();
     try {
-      await login(formData.email, formData.password);
-      navigate('/dashboard'); 
+        const user = await login(formData.email, formData.password);
+        
+        if (user.role === 'admin' || user.role === 'maintenance') {
+            navigate('/admin-dashboard');
+        } else {
+            navigate('/dashboard');
+        }
     } catch (error) {
-      alert(error.response?.data?.message || 'Login failed');
+        alert(error.response?.data?.message || 'Login failed');
     }
   }
 
@@ -37,10 +43,15 @@ function Login() {
       return alert("Passwords don't match!");
     }
     try {
-      await register(formData);
-      navigate('/dashboard');
+      const user = await register(formData);
+        
+        if (user.role === 'admin' || user.role === 'maintenance') {
+            navigate('/admin-dashboard');
+        } else {
+            navigate('/dashboard');
+        }
     } catch (error) {
-      alert(error.response?.data?.message || 'Registration failed');
+        alert(error.response?.data?.message || 'Registration failed');
     }
   }
 
@@ -180,6 +191,22 @@ function Login() {
                     onChange={handleChange}
                     required
                   />
+                </div>
+
+                <label>Register As</label>
+                <div className="input-wrap">
+                  <i className="fa-solid fa-graduation-cap"></i>
+                  <select 
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="role-select"
+                    required
+                  >
+                    <option value="student">Student</option>
+                    <option value="maintenance">Maintenance Staff</option>
+                    <option value="admin">Administrator</option>
+                  </select>
                 </div>
 
                 <label>Password</label>
