@@ -1,0 +1,404 @@
+
+.dashboard-container {
+  display: flex;
+  min-height: calc(100vh - 60px); 
+}
+
+
+.sidebar {
+  width: 200px;
+  background: #fff;
+  border-right: 1px solid #e0e3ea;
+  padding: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #555;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.sidebar-link:hover {
+  color: #3b4c7c;
+  background: #f0f2f7;
+}
+
+.sidebar-link.active {
+  background: #3b4c7c;
+  color: #fff;
+  border-radius: 0 8px 8px 0;
+  margin-right: 0.5rem;
+}
+
+.sidebar-link i {
+  width: 18px;
+  text-align: center;
+}
+
+/* ===== MAIN CONTENT ===== */
+.dashboard-main {
+  flex: 1;
+  padding: 2rem 2.5rem;
+  overflow-y: auto;
+}
+
+/* --- Title Row --- */
+.dashboard-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.dashboard-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin-bottom: 0.25rem;
+}
+
+.dashboard-subtitle {
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.report-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #3b4c7c;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.report-btn:hover {
+  background: #2e3d63;
+}
+
+/* --- Status Cards --- */
+.status-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.status-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.status-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.pending-icon {
+  background: #fff3e0;
+  color: #e67e22;
+}
+
+.progress-icon {
+  background: #e3f2fd;
+  color: #2196f3;
+}
+
+.resolved-icon {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+
+.status-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #888;
+  font-weight: 500;
+}
+
+.status-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1a1a2e;
+}
+
+/* --- Issues Table --- */
+.issues-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.issues-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.issues-header h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+}
+
+.view-all {
+  font-size: 0.85rem;
+  color: #555;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.view-all:hover {
+  color: #3b4c7c;
+}
+
+.issues-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.issues-table th {
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #999;
+  letter-spacing: 0.5px;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+
+.issues-table td {
+  padding: 0.85rem 0.5rem;
+  font-size: 0.85rem;
+  color: #444;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+/* Status Badges */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge-in-progress {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.badge-pending {
+  background: #fff8e1;
+  color: #f9a825;
+}
+
+.badge-resolved {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.action-btn {
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b4c7c;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #3b4c7c;
+  color: #fff;
+  border-color: #3b4c7c;
+}
+
+/* --- Bottom Row --- */
+.dashboard-bottom {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+/* Service Updates */
+.service-updates {
+  background: #f0f4fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.service-updates h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.service-updates h3 i {
+  color: #3b4c7c;
+}
+
+.update-item {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.update-icon {
+  width: 36px;
+  height: 36px;
+  background: #dde4f0;
+  color: #3b4c7c;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.update-item strong {
+  display: block;
+  font-size: 0.9rem;
+  color: #1a1a2e;
+  margin-bottom: 0.2rem;
+}
+
+.update-item p {
+  font-size: 0.8rem;
+  color: #888;
+  line-height: 1.5;
+}
+
+/* Emergency Card */
+.emergency-card {
+  background: #1a1a2e;
+  color: #fff;
+  border-radius: 12px;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.emergency-card h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.emergency-card p {
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-bottom: 1.25rem;
+  line-height: 1.5;
+}
+
+.emergency-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.phone-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background: #fff;
+  color: #1a1a2e;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.chat-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  background: #3b4c7c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.phone-btn:hover {
+  background: #f0f0f0;
+}
+
+.chat-btn:hover {
+  background: #2e3d63;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .dashboard-container {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    flex-direction: row;
+    border-right: none;
+    border-bottom: 1px solid #e0e3ea;
+    padding: 0.5rem;
+    overflow-x: auto;
+  }
+
+  .sidebar-top {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .sidebar-bottom {
+    display: none;
+  }
+
+  .status-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-bottom {
+    grid-template-columns: 1fr;
+  }
+}
