@@ -1,16 +1,50 @@
-# React + Vite
+# CIRS - Campus Issue Reporting System 📢
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+CIRS is a modern, full-stack web application designed for university students to report campus issues (infrastructure, IT, safety, etc.) and track their resolution in real-time.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **User Authentication**: Secure registration and login using JWT (JSON Web Tokens).
+- **Dynamic Dashboard**: Personalized view for students showing their reported issues and status counts.
+- **Issue Reporting**: Easy-to-use form for reporting campus complaints.
+- **Auto-Categorization**: Backend logic that automatically maps issue categories to specific university departments.
+- **Real-time Status Tracking**: Monitor the lifecycle of an issue from "Pending" to "Resolved".
+- **Responsive Design**: Modern, premium UI built with React and custom CSS.
 
-## React Compiler
+## 🛠️ Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: React (Vite), Axios, React Router, Context API.
+- **Backend**: Node.js, Express.js.
+- **Database**: MongoDB Atlas.
+- **Security**: Bcrypt.js (Password hashing), JWT (Authentication), CORS.
 
-## Expanding the ESLint configuration
+## 📦 Installation & Setup
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 1. Prerequisites
+- Node.js installed.
+- MongoDB Atlas account.
+
+### 2. Backend Setup
+1. Navigate to the `Backend` folder.
+2. Create a `.env` file and add:
+   ```env
+   PORT= your port number 
+   MONGO_DBNAME = your db name
+   MONGO_USERNAME = you db username
+   MONGO_PASSWORD = your db password
+   JWT_SECRET=your_super_secret_key
+   ```
+3. Install dependencies: `npm install`
+4. Start the server: `npm run dev`
+
+### 3. Frontend Setup
+1. Navigate to the `Frontend` folder.
+2. Create a `.env` file and add:
+   ```env
+   VITE_API_BASE_URL= yourhosturl/api
+   ```
+3. Install dependencies: `npm install`
+4. Start the app: `npm run dev`
+
+
+Developed by Raghav for a better campus environment.
