@@ -27,6 +27,10 @@ const issueSchema = new mongoose.Schema({
         type: String, 
         required: [true, 'Please add a location'] 
     },
+    university: {
+        type: String,
+        required: true
+    },
     status: { 
         type: String, 
         enum: ['Pending', 'In-Progress', 'Resolved'], 

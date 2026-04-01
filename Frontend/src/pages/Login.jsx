@@ -12,7 +12,6 @@ function Login() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    universityID: '',
     password: '',
     confirmPassword: '',
     role: 'student'
@@ -27,7 +26,7 @@ function Login() {
     try {
         const user = await login(formData.email, formData.password);
         
-        if (user.role === 'admin' || user.role === 'maintenance') {
+        if (user.role === 'admin') {
             navigate('/admin-dashboard');
         } else {
             navigate('/dashboard');
@@ -45,7 +44,7 @@ function Login() {
     try {
       const user = await register(formData);
         
-        if (user.role === 'admin' || user.role === 'maintenance') {
+        if (user.role === 'admin') {
             navigate('/admin-dashboard');
         } else {
             navigate('/dashboard');
@@ -175,19 +174,6 @@ function Login() {
                     name="email"
                     placeholder="name@uni.edu" 
                     value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-
-                <label>University ID</label>
-                <div className="input-wrap">
-                  <i className="fa-solid fa-id-card"></i>
-                  <input 
-                    type="text" 
-                    name="universityID"
-                    placeholder="100456789" 
-                    value={formData.universityID}
                     onChange={handleChange}
                     required
                   />
