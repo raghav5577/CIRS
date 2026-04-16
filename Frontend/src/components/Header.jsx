@@ -11,8 +11,13 @@ function Header() {
         navigate('/login');
     };
 
-    const dashboardPath = user?.role === 'admin' ? '/admin-dashboard' : "/dashboard";
-
+const dashboardPath =
+    user?.role === 'admin'
+        ? '/admin-dashboard'
+        : user?.role === 'maintenance'
+        ? '/maintenance-dashboard'
+        : '/dashboard';
+        
     return (
         <header className="header">
             <div className="header-left">
