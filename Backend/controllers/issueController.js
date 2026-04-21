@@ -2,19 +2,142 @@ const Issue = require('../models/Issue');
 const User = require('../models/User');
 const { getUniversityFromEmail } = require('../utils/university');
 
+const ISSUE_CATEGORIES = ['Maintenance', 'IT Support', 'Safety', 'Facilities', 'Academic'];
+const DEPARTMENT_MAP = {
+    Maintenance: 'Sterling and Wilson',
+    'IT Support': 'IT Cell',
+    Safety: 'CPS Security',
+    Facilities: 'Admin Block',
+    Academic: 'Academic Office'
+};
+
+const buildAutofillPrompt = (issueText) => `
+You are helping fill a campus issue reporting form.
+
+Allowed categories:
+- Maintenance
+- IT Support
+- Safety
+- Facilities
+- Academic
+
+Based on the user's report, extract the best possible values for:
+- title: short and specific
+- description: a clean, helpful issue description
+- category: must be exactly one allowed category
+- location: short location string, or "" if missing
+
+Return JSON only with this exact shape:
+{"title":"","description":"","category":"","location":""}
+
+User report:
+${issueText}
+`;
+
+const extractJsonObject = (text) => {
+    if (!text) {
+        return null;
+    }
+
+    const trimmed = text.trim();
+    try {
+        return JSON.parse(trimmed);
+    } catch (error) {
+        const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(jsonMatch[0]);
+        } catch (nestedError) {
+            return null;
+        }
+    }
+};
+
+const sanitizeAutofill = (draft, fallbackText) => {
+    const safeDraft = draft && typeof draft === 'object' ? draft : {};
+    const normalizedCategory = ISSUE_CATEGORIES.includes(safeDraft.category)
+        ? safeDraft.category
+        : 'Maintenance';
+    const normalizedDescription = typeof safeDraft.description === 'string' && safeDraft.description.trim()
+        ? safeDraft.description.trim()
+        : fallbackText;
+    const normalizedTitle = typeof safeDraft.title === 'string' && safeDraft.title.trim()
+        ? safeDraft.title.trim()
+        : normalizedDescription.slice(0, 80) || 'Campus issue report';
+    const normalizedLocation = typeof safeDraft.location === 'string'
+        ? safeDraft.location.trim()
+        : '';
+
+    return {
+        title: normalizedTitle,
+        description: normalizedDescription,
+        category: normalizedCategory,
+        location: normalizedLocation
+    };
+};
+
+const requestGroqAutofill = async (issueText) => {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+        const error = new Error('GROQ_API_KEY is not configured');
+        error.statusCode = 503;
+        throw error;
+    }
+
+    const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model,
+            temperature: 0.2,
+            response_format: { type: 'json_object' },
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You extract structured issue reports and must return valid JSON only.'
+                },
+                {
+                    role: 'user',
+                    content: buildAutofillPrompt(issueText)
+                }
+            ]
+        })
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        const error = new Error(`Groq request failed: ${errorText}`);
+        error.statusCode = response.status;
+        throw error;
+    }
+
+    const payload = await response.json();
+    const content = payload.choices?.[0]?.message?.content;
+    const parsed = extractJsonObject(content);
+
+    if (!parsed) {
+        throw new Error('Groq returned an unreadable autofill response');
+    }
+
+    return sanitizeAutofill(parsed, issueText);
+};
+
 exports.createIssue = async (req,res)=>{
     try{
         const {title, description, category, location} = req.body;
-        const university = req.user.university || getUniversityFromEmail(req.user.email);
+        if (!ISSUE_CATEGORIES.includes(category)) {
+            return res.status(400).json({ message: 'Invalid issue category' });
+        }
 
-        const departmentMap = {
-             'Maintenance': 'Sterling and Wilson',
-            'IT Support': 'IT Cell',
-            'Safety': 'CPS Security',
-            'Facilities': 'Admin Block',
-            'Academic': 'Academic Office'
-        };
-        const department = departmentMap[category];
+        const university = req.user.university || getUniversityFromEmail(req.user.email);
+        const department = DEPARTMENT_MAP[category];
 
         const issue = await Issue.create({
             user: req.user._id,
@@ -30,6 +153,29 @@ exports.createIssue = async (req,res)=>{
     }
     catch(error){
         res.status(500).json({message: error.message});
+    }
+};
+
+exports.autofillIssue = async (req, res) => {
+    try {
+        const issueText = typeof req.body.issueText === 'string' ? req.body.issueText.trim() : '';
+        if (!issueText) {
+            return res.status(400).json({ message: 'issueText is required' });
+        }
+
+        const autofilled = await requestGroqAutofill(issueText);
+        return res.json({
+            ...autofilled,
+            availableCategories: ISSUE_CATEGORIES
+        });
+    } catch (error) {
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json({
+            message: statusCode === 503
+                ? 'AI autofill is not configured on the server'
+                : 'Failed to generate AI autofill',
+            error: error.message
+        });
     }
 };
 
