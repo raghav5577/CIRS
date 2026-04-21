@@ -2,7 +2,7 @@ const Issue = require('../models/Issue');
 const User = require('../models/User');
 const { getUniversityFromEmail } = require('../utils/university');
 
-const ISSUE_CATEGORIES = ['Maintenance', 'IT Support', 'Safety', 'Facilities', 'Academic'];
+const FALLBACK_ISSUE_CATEGORIES = ['Maintenance', 'IT Support', 'Safety', 'Facilities', 'Academic'];
 const DEPARTMENT_MAP = {
     Maintenance: 'Sterling and Wilson',
     'IT Support': 'IT Cell',
@@ -11,15 +11,19 @@ const DEPARTMENT_MAP = {
     Academic: 'Academic Office'
 };
 
-const buildAutofillPrompt = (issueText) => `
+const getIssueCategories = () => {
+    const schemaCategories = Issue.schema?.path('category')?.enumValues;
+    if (Array.isArray(schemaCategories) && schemaCategories.length > 0) {
+        return schemaCategories;
+    }
+    return FALLBACK_ISSUE_CATEGORIES;
+};
+
+const buildAutofillPrompt = (issueText, issueCategories) => `
 You are helping fill a campus issue reporting form.
 
 Allowed categories:
-- Maintenance
-- IT Support
-- Safety
-- Facilities
-- Academic
+${issueCategories.map((category) => `- ${category}`).join('\n')}
 
 Based on the user's report, extract the best possible values for:
 - title: short and specific
@@ -56,11 +60,12 @@ const extractJsonObject = (text) => {
     }
 };
 
-const sanitizeAutofill = (draft, fallbackText) => {
+const sanitizeAutofill = (draft, fallbackText, issueCategories) => {
     const safeDraft = draft && typeof draft === 'object' ? draft : {};
-    const normalizedCategory = ISSUE_CATEGORIES.includes(safeDraft.category)
+    const fallbackCategory = issueCategories[0] || FALLBACK_ISSUE_CATEGORIES[0];
+    const normalizedCategory = issueCategories.includes(safeDraft.category)
         ? safeDraft.category
-        : 'Maintenance';
+        : fallbackCategory;
     const normalizedDescription = typeof safeDraft.description === 'string' && safeDraft.description.trim()
         ? safeDraft.description.trim()
         : fallbackText;
@@ -79,7 +84,7 @@ const sanitizeAutofill = (draft, fallbackText) => {
     };
 };
 
-const requestGroqAutofill = async (issueText) => {
+const requestGroqAutofill = async (issueText, issueCategories) => {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
         const error = new Error('GROQ_API_KEY is not configured');
@@ -105,7 +110,7 @@ const requestGroqAutofill = async (issueText) => {
                 },
                 {
                     role: 'user',
-                    content: buildAutofillPrompt(issueText)
+                    content: buildAutofillPrompt(issueText, issueCategories)
                 }
             ]
         })
@@ -126,13 +131,14 @@ const requestGroqAutofill = async (issueText) => {
         throw new Error('Groq returned an unreadable autofill response');
     }
 
-    return sanitizeAutofill(parsed, issueText);
+    return sanitizeAutofill(parsed, issueText, issueCategories);
 };
 
 exports.createIssue = async (req,res)=>{
     try{
+        const issueCategories = getIssueCategories();
         const {title, description, category, location} = req.body;
-        if (!ISSUE_CATEGORIES.includes(category)) {
+        if (!issueCategories.includes(category)) {
             return res.status(400).json({ message: 'Invalid issue category' });
         }
 
@@ -158,15 +164,16 @@ exports.createIssue = async (req,res)=>{
 
 exports.autofillIssue = async (req, res) => {
     try {
+        const issueCategories = getIssueCategories();
         const issueText = typeof req.body.issueText === 'string' ? req.body.issueText.trim() : '';
         if (!issueText) {
             return res.status(400).json({ message: 'issueText is required' });
         }
 
-        const autofilled = await requestGroqAutofill(issueText);
+        const autofilled = await requestGroqAutofill(issueText, issueCategories);
         return res.json({
             ...autofilled,
-            availableCategories: ISSUE_CATEGORIES
+            availableCategories: issueCategories
         });
     } catch (error) {
         const statusCode = error.statusCode || 500;
