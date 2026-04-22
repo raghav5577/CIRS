@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Issue = require('../models/Issue');
 const jwt = require('jsonwebtoken');
 const { getUniversityFromEmail } = require('../utils/university');
 
@@ -61,6 +62,64 @@ exports.getUniversityUsers = async (req, res) => {
             .sort({ createdAt: -1 });
 
         return res.json(users);
+    }
+    catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+exports.deleteUniversityUser = async (req, res) => {
+    try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Only admins can delete users' });
+        }
+
+        const targetUserId = req.params.id;
+        if (!targetUserId) {
+            return res.status(400).json({ message: 'User id is required' });
+        }
+
+        if (targetUserId.toString() === req.user._id.toString()) {
+            return res.status(400).json({ message: 'You cannot delete your own account' });
+        }
+
+        const adminUniversity = req.user.university || getUniversityFromEmail(req.user.email);
+        const targetUser = await User.findById(targetUserId);
+
+        if (!targetUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const targetUniversity = targetUser.university || getUniversityFromEmail(targetUser.email);
+        if (targetUniversity !== adminUniversity) {
+            return res.status(403).json({ message: 'You can only delete users in your organisation' });
+        }
+
+        if (targetUser.role === 'admin') {
+            return res.status(403).json({ message: 'Admin accounts cannot be deleted from this panel' });
+        }
+
+        if (targetUser.role === 'student') {
+            await Issue.deleteMany({ user: targetUser._id });
+        }
+
+        if (targetUser.role === 'maintenance') {
+            await Issue.updateMany(
+                { assignedTo: targetUser._id, status: 'In-Progress' },
+                { $set: { status: 'Pending' } }
+            );
+            await Issue.updateMany(
+                { assignedTo: targetUser._id },
+                { $set: { assignedTo: null } }
+            );
+        }
+
+        await User.findByIdAndDelete(targetUser._id);
+
+        return res.json({
+            message: 'User deleted successfully',
+            deletedUserId: targetUser._id
+        });
     }
     catch (error) {
         return res.status(500).json({ message: error.message });

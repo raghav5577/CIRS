@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import API from '../api/api';
+import { useAuth } from '../context/AuthContext';
 import './AdminDashboard.css';
 
 function AdminManageUsers() {
+  const { user: loggedInUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [roleFilter, setRoleFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [deletingUserId, setDeletingUserId] = useState('');
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -34,6 +37,27 @@ function AdminManageUsers() {
       return byRole && bySearch;
     });
   }, [users, roleFilter, search]);
+
+  const handleDeleteUser = async (targetUser) => {
+    const isSelf = loggedInUser?.id === targetUser._id;
+    if (isSelf || targetUser.role === 'admin') {
+      return;
+    }
+
+    const confirmed = window.confirm(`Delete ${targetUser.name} (${targetUser.email})? This action cannot be undone.`);
+    if (!confirmed) return;
+
+    try {
+      setDeletingUserId(targetUser._id);
+      await API.delete(`/auth/users/${targetUser._id}`);
+      setUsers((prevUsers) => prevUsers.filter((user) => user._id !== targetUser._id));
+    } catch (error) {
+      const message = error?.response?.data?.message || 'Failed to delete user';
+      alert(message);
+    } finally {
+      setDeletingUserId('');
+    }
+  };
 
   return (
     <section className="issues-section">
@@ -76,6 +100,7 @@ function AdminManageUsers() {
                 <th>ROLE</th>
                 <th>UNIVERSITY</th>
                 <th>JOINED</th>
+                  <th>ACTION</th>
               </tr>
             </thead>
             <tbody>
@@ -86,6 +111,16 @@ function AdminManageUsers() {
                   <td><span className="badge">{user.role}</span></td>
                   <td>{user.university}</td>
                   <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                    <td>
+                      <button
+                        className="delete-user-btn"
+                        type="button"
+                        disabled={deletingUserId === user._id || loggedInUser?.id === user._id || user.role === 'admin'}
+                        onClick={() => handleDeleteUser(user)}
+                      >
+                        {deletingUserId === user._id ? 'Deleting...' : 'Delete'}
+                      </button>
+                    </td>
                 </tr>
               ))}
             </tbody>

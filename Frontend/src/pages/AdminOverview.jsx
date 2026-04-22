@@ -12,6 +12,7 @@ function AdminOverview() {
   const [workers, setWorkers] = useState([]);
   const [selectedWorkers, setSelectedWorkers] = useState({});
   const [assigningIssueId, setAssigningIssueId] = useState('');
+  const [closingIssueId, setClosingIssueId] = useState('');
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState(null);
@@ -45,6 +46,22 @@ function AdminOverview() {
       console.error('Failed to assign worker', error);
     } finally {
       setAssigningIssueId('');
+    }
+  };
+
+  const handleCloseIssue = async (issueId) => {
+    const confirmed = window.confirm('Close this ticket as Resolved?');
+    if (!confirmed) return;
+
+    try {
+      setClosingIssueId(issueId);
+      const { data } = await API.put(`/issues/${issueId}/status`, { status: 'Resolved' });
+      setIssues((prev) => prev.map((issue) => (issue._id === issueId ? data : issue)));
+    } catch (error) {
+      const message = error?.response?.data?.message || 'Failed to close ticket';
+      alert(message);
+    } finally {
+      setClosingIssueId('');
     }
   };
 
@@ -175,6 +192,13 @@ function AdminOverview() {
                         disabled={!selectedWorkers[issue._id] || assigningIssueId === issue._id}
                       >
                         {assigningIssueId === issue._id ? 'Assigning...' : 'Assign'}
+                      </button>
+                      <button
+                        className="close-btn-table"
+                        onClick={() => handleCloseIssue(issue._id)}
+                        disabled={closingIssueId === issue._id || issue.status === 'Resolved'}
+                      >
+                        {closingIssueId === issue._id ? 'Closing...' : 'Close'}
                       </button>
                     </div>
                   </td>

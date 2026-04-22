@@ -64,6 +64,51 @@
     font-family: inherit;
 }
 
+.ai-fill-btn {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: #2563eb;
+    color: #fff;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.ai-fill-btn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.ai-hint {
+    margin-top: -2px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.ai-status {
+    margin-top: -6px;
+    margin-bottom: 16px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.ai-status.success {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.ai-status.error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
 .modal-actions {
     display: flex;
     gap: 10px;

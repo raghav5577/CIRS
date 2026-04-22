@@ -2,19 +2,148 @@ const Issue = require('../models/Issue');
 const User = require('../models/User');
 const { getUniversityFromEmail } = require('../utils/university');
 
+const FALLBACK_ISSUE_CATEGORIES = ['Maintenance', 'IT Support', 'Safety', 'Facilities', 'Academic'];
+const DEPARTMENT_MAP = {
+    Maintenance: 'Sterling and Wilson',
+    'IT Support': 'IT Cell',
+    Safety: 'CPS Security',
+    Facilities: 'Admin Block',
+    Academic: 'Academic Office'
+};
+
+const getIssueCategories = () => {
+    const schemaCategories = Issue.schema?.path('category')?.enumValues;
+    if (Array.isArray(schemaCategories) && schemaCategories.length > 0) {
+        return schemaCategories;
+    }
+    return FALLBACK_ISSUE_CATEGORIES;
+};
+
+const buildAutofillPrompt = (issueText, issueCategories) => `
+You are helping fill a campus issue reporting form.
+
+Allowed categories:
+${issueCategories.map((category) => `- ${category}`).join('\n')}
+
+Based on the user's report, extract the best possible values for:
+- title: short and specific
+- description: a clean, helpful issue description
+- category: must be exactly one allowed category
+- location: short location string, or "" if missing
+
+Return JSON only with this exact shape:
+{"title":"","description":"","category":"","location":""}
+
+User report:
+${issueText}
+`;
+
+const extractJsonObject = (text) => {
+    if (!text) {
+        return null;
+    }
+
+    const trimmed = text.trim();
+    try {
+        return JSON.parse(trimmed);
+    } catch (error) {
+        const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            return null;
+        }
+
+        try {
+            return JSON.parse(jsonMatch[0]);
+        } catch (nestedError) {
+            return null;
+        }
+    }
+};
+
+const sanitizeAutofill = (draft, fallbackText, issueCategories) => {
+    const safeDraft = draft && typeof draft === 'object' ? draft : {};
+    const fallbackCategory = issueCategories[0] || FALLBACK_ISSUE_CATEGORIES[0];
+    const normalizedCategory = issueCategories.includes(safeDraft.category)
+        ? safeDraft.category
+        : fallbackCategory;
+    const normalizedDescription = typeof safeDraft.description === 'string' && safeDraft.description.trim()
+        ? safeDraft.description.trim()
+        : fallbackText;
+    const normalizedTitle = typeof safeDraft.title === 'string' && safeDraft.title.trim()
+        ? safeDraft.title.trim()
+        : normalizedDescription.slice(0, 80) || 'Campus issue report';
+    const normalizedLocation = typeof safeDraft.location === 'string'
+        ? safeDraft.location.trim()
+        : '';
+
+    return {
+        title: normalizedTitle,
+        description: normalizedDescription,
+        category: normalizedCategory,
+        location: normalizedLocation
+    };
+};
+
+const requestGroqAutofill = async (issueText, issueCategories) => {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+        const error = new Error('GROQ_API_KEY is not configured');
+        error.statusCode = 503;
+        throw error;
+    }
+
+    const model = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model,
+            temperature: 0.2,
+            response_format: { type: 'json_object' },
+            messages: [
+                {
+                    role: 'system',
+                    content: 'You extract structured issue reports and must return valid JSON only.'
+                },
+                {
+                    role: 'user',
+                    content: buildAutofillPrompt(issueText, issueCategories)
+                }
+            ]
+        })
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        const error = new Error(`Groq request failed: ${errorText}`);
+        error.statusCode = response.status;
+        throw error;
+    }
+
+    const payload = await response.json();
+    const content = payload.choices?.[0]?.message?.content;
+    const parsed = extractJsonObject(content);
+
+    if (!parsed) {
+        throw new Error('Groq returned an unreadable autofill response');
+    }
+
+    return sanitizeAutofill(parsed, issueText, issueCategories);
+};
+
 exports.createIssue = async (req,res)=>{
     try{
+        const issueCategories = getIssueCategories();
         const {title, description, category, location} = req.body;
-        const university = req.user.university || getUniversityFromEmail(req.user.email);
+        if (!issueCategories.includes(category)) {
+            return res.status(400).json({ message: 'Invalid issue category' });
+        }
 
-        const departmentMap = {
-             'Maintenance': 'Sterling and Wilson',
-            'IT Support': 'IT Cell',
-            'Safety': 'CPS Security',
-            'Facilities': 'Admin Block',
-            'Academic': 'Academic Office'
-        };
-        const department = departmentMap[category];
+        const university = req.user.university || getUniversityFromEmail(req.user.email);
+        const department = DEPARTMENT_MAP[category];
 
         const issue = await Issue.create({
             user: req.user._id,
@@ -30,6 +159,30 @@ exports.createIssue = async (req,res)=>{
     }
     catch(error){
         res.status(500).json({message: error.message});
+    }
+};
+
+exports.autofillIssue = async (req, res) => {
+    try {
+        const issueCategories = getIssueCategories();
+        const issueText = typeof req.body.issueText === 'string' ? req.body.issueText.trim() : '';
+        if (!issueText) {
+            return res.status(400).json({ message: 'issueText is required' });
+        }
+
+        const autofilled = await requestGroqAutofill(issueText, issueCategories);
+        return res.json({
+            ...autofilled,
+            availableCategories: issueCategories
+        });
+    } catch (error) {
+        const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json({
+            message: statusCode === 503
+                ? 'AI autofill is not configured on the server'
+                : 'Failed to generate AI autofill',
+            error: error.message
+        });
     }
 };
 
@@ -81,24 +234,35 @@ exports.getIssues = async (req, res) => {
 //update issue status function 
 exports.updateIssueStatus = async (req, res) => {
   try {
-    if (req.user.role !== 'maintenance') {
-      return res.status(403).json({ message: 'Only maintenance staff can update status' });
-    }
-
     const { status } = req.body;
-    const allowedStatuses = ['In-Progress', 'Resolved'];
+        const allowedStatuses = ['In-Progress', 'Resolved'];
 
     if (!allowedStatuses.includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
+
+        if (!['maintenance', 'admin'].includes(req.user.role)) {
+            return res.status(403).json({ message: 'Not authorized to update status' });
+        }
+
+        if (req.user.role === 'admin' && status !== 'Resolved') {
+            return res.status(403).json({ message: 'Admins can only close tickets' });
+        }
 
     const issue = await Issue.findById(req.params.id);
     if (!issue) {
       return res.status(404).json({ message: 'Issue not found' });
     }
 
-    if (!issue.assignedTo || issue.assignedTo.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'You can update only issues assigned to you' });
+        const university = req.user.university || getUniversityFromEmail(req.user.email);
+        if (issue.university !== university) {
+            return res.status(403).json({ message: 'You can only update tickets in your organisation' });
+        }
+
+        if (req.user.role === 'maintenance') {
+            if (!issue.assignedTo || issue.assignedTo.toString() !== req.user._id.toString()) {
+                return res.status(403).json({ message: 'You can update only issues assigned to you' });
+            }
     }
 
     issue.status = status;
