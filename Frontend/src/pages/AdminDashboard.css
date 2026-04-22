@@ -672,4 +672,22 @@
   .category-row {
     grid-template-columns: 95px 1fr auto;
   }
+
+  .dashboard-header-row {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .dashboard-main {
+    padding: 1.5rem 1rem;
+  }
+
+  .issues-section, .table-container, .users-table-container {
+    overflow-x: auto;
+  }
+
+  .issues-table, .users-table {
+    min-width: 600px;
+  }
 }
