@@ -40,6 +40,14 @@ const issueSchema = new mongoose.Schema({
         type: String, 
         enum: ['Pending', 'In-Progress', 'Resolved'], 
         default: 'Pending' 
+    },
+    issueImage: {
+        type: String,
+        default: null
+    },
+    resolutionImage: {
+        type: String,
+        default: null
     }
 }, { timestamps: true });
 

@@ -137,7 +137,7 @@ const requestGroqAutofill = async (issueText, issueCategories) => {
 exports.createIssue = async (req,res)=>{
     try{
         const issueCategories = getIssueCategories();
-        const {title, description, category, location} = req.body;
+        const {title, description, category, location, issueImage} = req.body;
         if (!issueCategories.includes(category)) {
             return res.status(400).json({ message: 'Invalid issue category' });
         }
@@ -153,6 +153,7 @@ exports.createIssue = async (req,res)=>{
             department,
             location,
             university,
+            issueImage: issueImage || null,
             status: "Pending"
         });
         res.status(201).json(issue);
@@ -234,7 +235,7 @@ exports.getIssues = async (req, res) => {
 //update issue status function 
 exports.updateIssueStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, resolutionImage } = req.body;
         const allowedStatuses = ['In-Progress', 'Resolved'];
 
     if (!allowedStatuses.includes(status)) {
@@ -247,6 +248,10 @@ exports.updateIssueStatus = async (req, res) => {
 
         if (req.user.role === 'admin' && status !== 'Resolved') {
             return res.status(403).json({ message: 'Admins can only close tickets' });
+        }
+        
+        if (status === 'Resolved' && !resolutionImage && req.user.role !== 'admin') {
+            return res.status(400).json({ message: 'Resolution image is required to resolve an issue' });
         }
 
     const issue = await Issue.findById(req.params.id);
@@ -263,9 +268,13 @@ exports.updateIssueStatus = async (req, res) => {
             if (!issue.assignedTo || issue.assignedTo.toString() !== req.user._id.toString()) {
                 return res.status(403).json({ message: 'You can update only issues assigned to you' });
             }
-    }
+        }
 
     issue.status = status;
+    if (status === 'Resolved' && resolutionImage) {
+        issue.resolutionImage = resolutionImage;
+    }
+    
     await issue.save();
 
     const updatedIssue = await Issue.findById(issue._id)

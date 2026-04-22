@@ -1,6 +1,18 @@
+import { useEffect } from 'react';
 import './IssueDetailModal.css';
 
 const IssueDetailModal = ({ isOpen, onClose, issue }) => {
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen]);
+
     if (!isOpen || !issue) return null;
 
     const formatDate = (dateString) => {
@@ -57,6 +69,27 @@ const IssueDetailModal = ({ isOpen, onClose, issue }) => {
                         <span className="detail-label">Description</span>
                         <p className="detail-description">{issue.description}</p>
                     </div>
+
+                    {(issue.issueImage || issue.resolutionImage) && (
+                        <div className="detail-grid">
+                            {issue.issueImage && (
+                                <div className="detail-row">
+                                    <span className="detail-label">Reported Issue Image (Student)</span>
+                                    <div className="detail-value">
+                                        <img src={issue.issueImage} alt="Issue reported" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', marginTop: '5px' }} />
+                                    </div>
+                                </div>
+                            )}
+                            {issue.resolutionImage && (
+                                <div className="detail-row">
+                                    <span className="detail-label">Resolution Image (Staff)</span>
+                                    <div className="detail-value">
+                                        <img src={issue.resolutionImage} alt="Resolution" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', marginTop: '5px' }} />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     <div className="detail-footer">
                         <span className="detail-label">Submitted On</span>

@@ -3,6 +3,8 @@
     padding: 2.5rem;
     background: #fff;
     border-radius: 12px;
+    max-height: 90vh;
+    overflow-y: auto;
     box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
     animation: sideSlideIn 0.35s ease-out;
 }
