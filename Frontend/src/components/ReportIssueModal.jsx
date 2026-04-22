@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import API from '../api/api';
 import './ReportIssueModal.css';
 
@@ -7,6 +7,7 @@ const INITIAL_FORM_DATA = {
     description: '',
     category: 'Maintenance',
     location: '',
+    issueImage: ''
 };
 
 const ReportIssueModal = ({isOpen, onClose, onIssueCreated})=>{
@@ -15,6 +16,17 @@ const ReportIssueModal = ({isOpen, onClose, onIssueCreated})=>{
     const [isAutofilling, setIsAutofilling] = useState(false);
     const [autofillMessage, setAutofillMessage] = useState('');
     const [autofillError, setAutofillError] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'unset';
+        }
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, [isOpen]);
 
     if(!isOpen) return null;
 
@@ -35,6 +47,17 @@ const ReportIssueModal = ({isOpen, onClose, onIssueCreated})=>{
         if (autofillMessage) {
             setAutofillMessage('');
             setAutofillError(false);
+        }
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setFormData({ ...formData, issueImage: reader.result });
+            };
+            reader.readAsDataURL(file);
         }
     };
 
@@ -155,6 +178,17 @@ const ReportIssueModal = ({isOpen, onClose, onIssueCreated})=>{
                         onChange={handleFieldChange('description')} 
                         required 
                     />
+                    <label>Upload Image (optional)</label>
+                    <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleImageChange} 
+                    />
+                    {formData.issueImage && (
+                        <div className="image-preview">
+                            <img src={formData.issueImage} alt="Issue preview" style={{maxHeight:'150px', borderRadius:'8px', marginTop:'10px'}} />
+                        </div>
+                    )}
                     <div className="modal-actions">
                         <button type="button" onClick={handleClose} className="cancel-btn">Discard</button>
                         <button type="submit" className="submit-btn highlight">Submit Report</button>

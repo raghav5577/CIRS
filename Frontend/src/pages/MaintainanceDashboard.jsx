@@ -10,6 +10,7 @@ function MaintenanceDashboard() {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatuses, setSelectedStatuses] = useState({});
+  const [resolutionImages, setResolutionImages] = useState({});
   const [updatingIssueId, setUpdatingIssueId] = useState('');
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -33,15 +34,38 @@ function MaintenanceDashboard() {
     const nextStatus = selectedStatuses[issueId];
     if (!nextStatus) return;
 
+    const resolutionImage = resolutionImages[issueId];
+
+    if (nextStatus === 'Resolved' && !resolutionImage && user.role !== 'admin') {
+      alert('A resolution image is required to mark the issue as Resolved.');
+      return;
+    }
+
     try {
       setUpdatingIssueId(issueId);
-      const { data } = await API.put(`/issues/${issueId}/status`, { status: nextStatus });
+      const payload = { status: nextStatus };
+      if (nextStatus === 'Resolved' && resolutionImage) {
+          payload.resolutionImage = resolutionImage;
+      }
+      
+      const { data } = await API.put(`/issues/${issueId}/status`, payload);
       setIssues((prev) => prev.map((issue) => (issue._id === issueId ? data : issue)));
+      setResolutionImages((prev) => ({ ...prev, [issueId]: null }));
     } catch (error) {
       console.error('Failed to update status', error);
       alert(error.response?.data?.message || 'Failed to update status');
     } finally {
       setUpdatingIssueId('');
+    }
+  };
+
+  const handleImageUpload = (issueId, file) => {
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setResolutionImages((prev) => ({ ...prev, [issueId]: reader.result }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -168,6 +192,14 @@ function MaintenanceDashboard() {
                               <option value="In-Progress">In-Progress</option>
                               <option value="Resolved">Resolved</option>
                             </select>
+                            {(selectedStatuses[issue._id] === 'Resolved' || issue.status === 'Resolved') && (
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                onChange={(e) => handleImageUpload(issue._id, e.target.files[0])} 
+                                style={{ width: '100px', fontSize: '0.8rem', marginLeft: '5px' }} 
+                              />
+                            )}
                             <button
                               className="assign-btn"
                               onClick={() => handleStatusUpdate(issue._id)}
